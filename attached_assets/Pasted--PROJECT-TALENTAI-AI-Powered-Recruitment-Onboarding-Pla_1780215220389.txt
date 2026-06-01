@@ -1,0 +1,549 @@
+# PROJECT: TALENTAI - AI-Powered Recruitment & Onboarding Platform
+
+Build a complete, production-quality SaaS web application called **TalentAI**.
+
+This is a hackathon project for an AI/ML Full Stack Developer evaluation. The application should solve the complete recruitment lifecycle from candidate application to onboarding.
+
+The application must look like a modern funded startup product and prioritize:
+
+* Exceptional UI/UX
+* Smooth animations
+* Real AI functionality
+* Fast performance
+* Mobile responsiveness
+* Professional dashboards
+* Recruiter workflow automation
+
+The judges will evaluate both functionality and design quality.
+
+---
+
+# TECH STACK
+
+Frontend:
+
+* React
+* TypeScript
+* Vite
+* TailwindCSS
+* ShadCN UI
+* Framer Motion
+* Recharts
+* React Query
+
+Backend:
+
+* FastAPI
+* Python
+
+Database:
+
+* PostgreSQL
+
+Authentication:
+
+* JWT Authentication
+
+AI Components:
+
+* Groq API
+* Model: openai/gpt-oss-120b
+* Sentence Transformers
+* spaCy
+* Whisper
+
+Store API keys only in environment variables.
+
+---
+
+# PRODUCT VISION
+
+TalentAI should function like a mini version of:
+
+* Greenhouse
+* Lever
+* Workday
+* LinkedIn Recruiter
+
+The platform helps recruiters:
+
+1. Create job openings
+2. Receive applications
+3. Parse resumes automatically
+4. Rank candidates using AI
+5. Conduct AI-powered interviews
+6. Generate hiring recommendations
+7. Manage onboarding
+
+---
+
+# USER ROLES
+
+## Candidate
+
+Can:
+
+* Register/Login
+* Upload Resume
+* Apply to Jobs
+* View Match Scores
+* Attend AI Interview
+* Track Application Status
+* Complete Onboarding
+
+---
+
+## HR Recruiter
+
+Can:
+
+* Create Jobs
+* View Applicants
+* Compare Candidates
+* Review AI Insights
+* Schedule Interviews
+* Generate Offer Letters
+* View Analytics
+
+---
+
+## Admin
+
+Can:
+
+* Manage Users
+* Manage Recruiters
+* Manage Jobs
+* View Platform Analytics
+
+---
+
+# LANDING PAGE
+
+Create a premium startup-quality landing page.
+
+Include:
+
+Hero Section
+
+Headline:
+
+"AI-Powered Recruitment Intelligence"
+
+Subheadline:
+
+"Hire Faster. Hire Smarter. Hire with AI."
+
+Features Section
+
+* Resume Intelligence
+* Candidate Ranking
+* AI Interviews
+* Analytics Dashboard
+* Employee Onboarding
+
+Interactive Statistics
+
+* Applications Processed
+* Candidates Screened
+* Interviews Conducted
+* Hiring Success Rate
+
+Testimonials
+
+Call To Action
+
+Footer
+
+Animations:
+
+* Scroll animations
+* Floating cards
+* Fade transitions
+* Animated counters
+* Gradient backgrounds
+* Parallax effects
+
+Use Framer Motion throughout.
+
+---
+
+# AUTHENTICATION
+
+Pages:
+
+* Login
+* Register
+* Forgot Password
+
+Role selection:
+
+* Candidate
+* HR
+* Admin
+
+Use JWT authentication.
+
+---
+
+# JOB MANAGEMENT
+
+Recruiters can create jobs.
+
+Fields:
+
+* Title
+* Description
+* Required Skills
+* Experience
+* Salary
+* Location
+* Employment Type
+
+Display jobs in beautiful cards.
+
+Include:
+
+* Search
+* Filters
+* Sorting
+
+---
+
+# RESUME PARSING SYSTEM
+
+Candidates upload:
+
+* PDF
+* DOCX
+
+Extract:
+
+* Name
+* Email
+* Phone
+* Skills
+* Education
+* Experience
+* Projects
+* Certifications
+
+Use:
+
+* pdfplumber
+* python-docx
+* spaCy
+
+Show extracted data in interactive cards.
+
+---
+
+# AI RESUME ANALYSIS
+
+After parsing the resume:
+
+Send candidate profile to GPT-OSS 120B.
+
+Generate:
+
+* Candidate Summary
+* Key Strengths
+* Weaknesses
+* Missing Skills
+* Recommended Roles
+* Hiring Recommendation
+
+Display results inside beautiful expandable panels.
+
+---
+
+# JOB MATCHING ENGINE
+
+Compare:
+
+Candidate Resume
+
+VS
+
+Job Description
+
+Use Sentence Transformers:
+
+all-MiniLM-L6-v2
+
+Calculate:
+
+Cosine Similarity
+
+Formula:
+
+Match Score = Cosine Similarity × 100
+
+Display:
+
+* Animated circular score indicator
+* Skill overlap chart
+* Missing skills analysis
+* Match breakdown
+
+---
+
+# CANDIDATE SCORING ENGINE
+
+Calculate Resume Score:
+
+Resume Score =
+
+(0.40 × Skill Match)
+
+*
+
+(0.20 × Project Relevance)
+
+*
+
+(0.20 × Experience Score)
+
+*
+
+(0.10 × Education Score)
+
+*
+
+(0.10 × Certification Score)
+
+Display:
+
+* Score cards
+* Ranking leaderboard
+* Visual breakdown
+
+---
+
+# AI INTERVIEW MODULE
+
+Allow candidate to:
+
+* Record Video
+* Upload Video
+
+Pipeline:
+
+Video Upload
+
+↓
+
+Whisper
+
+↓
+
+Speech-to-Text
+
+↓
+
+GPT-OSS Analysis
+
+↓
+
+Score Generation
+
+Evaluate:
+
+* Technical Knowledge
+* Communication
+* Relevance
+* Problem Solving
+* Confidence
+
+Scores range:
+
+0 - 100
+
+---
+
+# INTERVIEW FORMULA
+
+Interview Score =
+
+(0.35 × Technical)
+
+*
+
+(0.25 × Communication)
+
+*
+
+(0.20 × Relevance)
+
+*
+
+(0.10 × Confidence)
+
+*
+
+(0.10 × Problem Solving)
+
+---
+
+# FINAL HIRING SCORE
+
+Final Candidate Score =
+
+(0.40 × Resume Score)
+
+*
+
+(0.60 × Interview Score)
+
+Recommendation Logic:
+
+90+ = Strong Hire
+
+80-89 = Hire
+
+65-79 = Maybe
+
+Below 65 = Reject
+
+Show recommendation badge.
+
+---
+
+# RECRUITER COPILOT
+
+Create an AI chat assistant.
+
+Examples:
+
+* Show top Python candidates
+* Find React developers
+* Compare top applicants
+* Recommend interview questions
+* Explain why a candidate was rejected
+
+Use GPT-OSS 120B.
+
+Provide conversational responses.
+
+---
+
+# ANALYTICS DASHBOARD
+
+Create premium analytics.
+
+Metrics:
+
+* Total Applicants
+* Shortlisted
+* Interviewed
+* Hired
+* Rejected
+
+Charts:
+
+* Hiring Funnel
+* Applications Per Day
+* Skill Distribution
+* Top Universities
+* Candidate Sources
+* Hiring Trend
+
+Use Recharts.
+
+All charts should animate.
+
+---
+
+# OFFER LETTER GENERATOR
+
+Generate downloadable PDF.
+
+Fields:
+
+* Candidate Name
+* Position
+* Salary
+* Joining Date
+
+Use company branding.
+
+---
+
+# ONBOARDING PORTAL
+
+Candidates upload:
+
+* Aadhaar
+* PAN
+* Degree Certificate
+* Resume
+
+Checklist:
+
+✓ Documents Uploaded
+
+✓ Verification Complete
+
+✓ Offer Accepted
+
+✓ Training Assigned
+
+Display onboarding progress.
+
+---
+
+# DEMO DATA
+
+Preload:
+
+* 100 candidates
+* 20 jobs
+* Sample resumes
+* Interview transcripts
+* AI analysis outputs
+
+The platform must work immediately without requiring manual setup.
+
+---
+
+# UI/UX REQUIREMENTS
+
+Extremely important.
+
+Design style:
+
+* Glassmorphism
+* Modern SaaS aesthetics
+* Premium gradients
+* Floating cards
+* Smooth shadows
+* Rounded corners
+* Professional typography
+
+Animations:
+
+* Page transitions
+* Card hover effects
+* Animated counters
+* Loading skeletons
+* Progress animations
+* Dashboard transitions
+
+The final result should feel like a startup product that could be shown to investors, not a college assignment.
+
+---
+
+# IMPORTANT
+
+Focus heavily on:
+
+1. Resume Parsing
+2. AI Resume Analysis
+3. Job Matching
+4. Candidate Ranking
+5. Recruiter Dashboard
+6. Recruiter Copilot
+
+These are the core features that judges are most likely to test during the demo.
+
+Generate a complete, integrated, production-ready application with clean architecture, reusable components, API integration, responsive design, and excellent user experience.

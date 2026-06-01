@@ -1,0 +1,3 @@
+id,candidateId,jobId,status,offerAccepted,documentsUploaded,verificationComplete,trainingAssigned,joiningDate,salary,notes,createdAt,updatedAt
+186147,463253,358971,in-progress,1,1,,,2026-06-30T14:00:11.119Z,95000,Aisha is excited to join. Background check initiated.,2026-05-31T14:00:11.113Z,2026-05-31T14:00:11.113Z
+884843,962991,559647,pending,,,,,2026-07-15T14:00:11.119Z,140000,"Offer letter sent, awaiting response.",2026-05-31T14:00:11.113Z,2026-05-31T14:00:11.113Z

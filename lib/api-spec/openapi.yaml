@@ -1,0 +1,1282 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: TalentAI - AI-Powered Recruitment & Onboarding Platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: jobs
+    description: Job management
+  - name: candidates
+    description: Candidate management
+  - name: applications
+    description: Application management
+  - name: interviews
+    description: AI Interview management
+  - name: analytics
+    description: Platform analytics
+  - name: copilot
+    description: Recruiter AI Copilot
+  - name: onboarding
+    description: Employee onboarding
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Jobs ────────────────────────────────────────────────────────────────────
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List all job openings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: employmentType
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a new job opening
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "201":
+          description: Created job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a job by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateJob
+      tags: [jobs]
+      summary: Update a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobUpdate"
+      responses:
+        "200":
+          description: Updated job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+    delete:
+      operationId: deleteJob
+      tags: [jobs]
+      summary: Delete a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Candidates ───────────────────────────────────────────────────────────────
+  /candidates:
+    get:
+      operationId: listCandidates
+      tags: [candidates]
+      summary: List all candidates
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: jobId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Candidate"
+    post:
+      operationId: createCandidate
+      tags: [candidates]
+      summary: Create a candidate profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateInput"
+      responses:
+        "201":
+          description: Created candidate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidate"
+
+  /candidates/{id}:
+    get:
+      operationId: getCandidate
+      tags: [candidates]
+      summary: Get a candidate by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Candidate found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidate"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateCandidate
+      tags: [candidates]
+      summary: Update a candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CandidateUpdate"
+      responses:
+        "200":
+          description: Updated candidate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Candidate"
+
+  /candidates/{id}/resume-analysis:
+    get:
+      operationId: getCandidateResumeAnalysis
+      tags: [candidates]
+      summary: Get AI resume analysis for a candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: AI resume analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeAnalysis"
+
+  /candidates/{id}/match-score/{jobId}:
+    get:
+      operationId: getCandidateMatchScore
+      tags: [candidates]
+      summary: Get match score for candidate against a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Match score result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchScore"
+
+  # ─── Applications ─────────────────────────────────────────────────────────────
+  /applications:
+    get:
+      operationId: listApplications
+      tags: [applications]
+      summary: List all applications
+      parameters:
+        - name: jobId
+          in: query
+          schema:
+            type: integer
+        - name: candidateId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+    post:
+      operationId: createApplication
+      tags: [applications]
+      summary: Submit an application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /applications/{id}:
+    get:
+      operationId: getApplication
+      tags: [applications]
+      summary: Get an application by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Application found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateApplication
+      tags: [applications]
+      summary: Update application status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationUpdate"
+      responses:
+        "200":
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /applications/ranked:
+    get:
+      operationId: getRankedApplications
+      tags: [applications]
+      summary: Get ranked/scored list of applications for a job
+      parameters:
+        - name: jobId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ranked applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RankedApplication"
+
+  # ─── Interviews ───────────────────────────────────────────────────────────────
+  /interviews:
+    get:
+      operationId: listInterviews
+      tags: [interviews]
+      summary: List all interviews
+      parameters:
+        - name: candidateId
+          in: query
+          schema:
+            type: integer
+        - name: jobId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of interviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Interview"
+    post:
+      operationId: createInterview
+      tags: [interviews]
+      summary: Create/schedule an interview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewInput"
+      responses:
+        "201":
+          description: Interview created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interview"
+
+  /interviews/{id}:
+    get:
+      operationId: getInterview
+      tags: [interviews]
+      summary: Get an interview by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Interview found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interview"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateInterview
+      tags: [interviews]
+      summary: Update interview scores/status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewUpdate"
+      responses:
+        "200":
+          description: Updated interview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interview"
+
+  /interviews/{id}/analyze:
+    post:
+      operationId: analyzeInterview
+      tags: [interviews]
+      summary: AI analysis of interview transcript
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewTranscript"
+      responses:
+        "200":
+          description: Interview analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewAnalysis"
+
+  # ─── Analytics ────────────────────────────────────────────────────────────────
+  /analytics/summary:
+    get:
+      operationId: getAnalyticsSummary
+      tags: [analytics]
+      summary: Platform-wide analytics summary
+      responses:
+        "200":
+          description: Analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
+
+  /analytics/hiring-funnel:
+    get:
+      operationId: getHiringFunnel
+      tags: [analytics]
+      summary: Hiring funnel data
+      parameters:
+        - name: jobId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Hiring funnel stages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FunnelStage"
+
+  /analytics/applications-over-time:
+    get:
+      operationId: getApplicationsOverTime
+      tags: [analytics]
+      summary: Applications received per day/week
+      responses:
+        "200":
+          description: Time series data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimeSeriesPoint"
+
+  /analytics/skill-distribution:
+    get:
+      operationId: getSkillDistribution
+      tags: [analytics]
+      summary: Top skills across all candidates
+      responses:
+        "200":
+          description: Skill distribution
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SkillCount"
+
+  /analytics/top-candidates:
+    get:
+      operationId: getTopCandidates
+      tags: [analytics]
+      summary: Top-scoring candidates
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: jobId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Top candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Candidate"
+
+  # ─── Recruiter Copilot ────────────────────────────────────────────────────────
+  /copilot/chat:
+    post:
+      operationId: copilotChat
+      tags: [copilot]
+      summary: Chat with AI recruiter copilot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CopilotMessage"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CopilotResponse"
+
+  # ─── Onboarding ───────────────────────────────────────────────────────────────
+  /onboarding:
+    get:
+      operationId: listOnboardings
+      tags: [onboarding]
+      summary: List all onboarding records
+      parameters:
+        - name: candidateId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of onboarding records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Onboarding"
+    post:
+      operationId: createOnboarding
+      tags: [onboarding]
+      summary: Create an onboarding record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingInput"
+      responses:
+        "201":
+          description: Onboarding record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Onboarding"
+
+  /onboarding/{id}:
+    get:
+      operationId: getOnboarding
+      tags: [onboarding]
+      summary: Get an onboarding record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Onboarding found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Onboarding"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateOnboarding
+      tags: [onboarding]
+      summary: Update onboarding progress/checklist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingUpdate"
+      responses:
+        "200":
+          description: Updated onboarding
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Onboarding"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    # ─── Job ──────────────────────────────────────────────────────────────────
+    Job:
+      type: object
+      required: [id, title, description, status, employmentType, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        requiredSkills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: ["string", "null"]
+        salaryMin:
+          type: ["integer", "null"]
+        salaryMax:
+          type: ["integer", "null"]
+        location:
+          type: ["string", "null"]
+        employmentType:
+          type: string
+        status:
+          type: string
+        applicantCount:
+          type: integer
+        createdAt:
+          type: string
+
+    JobInput:
+      type: object
+      required: [title, description, employmentType]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        requiredSkills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: string
+        salaryMin:
+          type: integer
+        salaryMax:
+          type: integer
+        location:
+          type: string
+        employmentType:
+          type: string
+        status:
+          type: string
+
+    JobUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        requiredSkills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: string
+        salaryMin:
+          type: integer
+        salaryMax:
+          type: integer
+        location:
+          type: string
+        employmentType:
+          type: string
+        status:
+          type: string
+
+    # ─── Candidate ────────────────────────────────────────────────────────────
+    Candidate:
+      type: object
+      required: [id, name, email, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: ["integer", "null"]
+        education:
+          type: ["string", "null"]
+        university:
+          type: ["string", "null"]
+        resumeScore:
+          type: ["number", "null"]
+        interviewScore:
+          type: ["number", "null"]
+        finalScore:
+          type: ["number", "null"]
+        recommendation:
+          type: ["string", "null"]
+        status:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        resumeText:
+          type: ["string", "null"]
+        summary:
+          type: ["string", "null"]
+        source:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    CandidateInput:
+      type: object
+      required: [name, email]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        location:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: integer
+        education:
+          type: string
+        university:
+          type: string
+        resumeText:
+          type: string
+        summary:
+          type: string
+        source:
+          type: string
+        avatarUrl:
+          type: string
+
+    CandidateUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        location:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        experience:
+          type: integer
+        education:
+          type: string
+        university:
+          type: string
+        resumeText:
+          type: string
+        summary:
+          type: string
+        status:
+          type: string
+        resumeScore:
+          type: number
+        interviewScore:
+          type: number
+        finalScore:
+          type: number
+        recommendation:
+          type: string
+        avatarUrl:
+          type: string
+
+    ResumeAnalysis:
+      type: object
+      required: [candidateId, summary, strengths, weaknesses, missingSkills, recommendedRoles, hiringRecommendation]
+      properties:
+        candidateId:
+          type: integer
+        summary:
+          type: string
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        missingSkills:
+          type: array
+          items:
+            type: string
+        recommendedRoles:
+          type: array
+          items:
+            type: string
+        hiringRecommendation:
+          type: string
+
+    MatchScore:
+      type: object
+      required: [candidateId, jobId, matchScore, skillOverlap, missingSkills, matchBreakdown]
+      properties:
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        matchScore:
+          type: number
+        skillOverlap:
+          type: array
+          items:
+            type: string
+        missingSkills:
+          type: array
+          items:
+            type: string
+        matchBreakdown:
+          type: object
+          properties:
+            skillMatch:
+              type: number
+            experienceMatch:
+              type: number
+            educationMatch:
+              type: number
+
+    # ─── Application ──────────────────────────────────────────────────────────
+    Application:
+      type: object
+      required: [id, candidateId, jobId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        status:
+          type: string
+        coverLetter:
+          type: ["string", "null"]
+        matchScore:
+          type: ["number", "null"]
+        resumeScore:
+          type: ["number", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        candidate:
+          $ref: "#/components/schemas/Candidate"
+        job:
+          $ref: "#/components/schemas/Job"
+
+    ApplicationInput:
+      type: object
+      required: [candidateId, jobId]
+      properties:
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        coverLetter:
+          type: string
+        notes:
+          type: string
+
+    ApplicationUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        notes:
+          type: string
+        matchScore:
+          type: number
+        resumeScore:
+          type: number
+
+    RankedApplication:
+      type: object
+      required: [id, candidateId, jobId, status, finalScore, rank, createdAt]
+      properties:
+        id:
+          type: integer
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        status:
+          type: string
+        matchScore:
+          type: ["number", "null"]
+        resumeScore:
+          type: ["number", "null"]
+        finalScore:
+          type: number
+        rank:
+          type: integer
+        recommendation:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        candidate:
+          $ref: "#/components/schemas/Candidate"
+
+    # ─── Interview ────────────────────────────────────────────────────────────
+    Interview:
+      type: object
+      required: [id, candidateId, jobId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        status:
+          type: string
+        scheduledAt:
+          type: ["string", "null"]
+        transcript:
+          type: ["string", "null"]
+        technicalScore:
+          type: ["number", "null"]
+        communicationScore:
+          type: ["number", "null"]
+        relevanceScore:
+          type: ["number", "null"]
+        confidenceScore:
+          type: ["number", "null"]
+        problemSolvingScore:
+          type: ["number", "null"]
+        overallScore:
+          type: ["number", "null"]
+        aiNotes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        candidate:
+          $ref: "#/components/schemas/Candidate"
+        job:
+          $ref: "#/components/schemas/Job"
+
+    InterviewInput:
+      type: object
+      required: [candidateId, jobId]
+      properties:
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        scheduledAt:
+          type: string
+
+    InterviewUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        scheduledAt:
+          type: string
+        transcript:
+          type: string
+        technicalScore:
+          type: number
+        communicationScore:
+          type: number
+        relevanceScore:
+          type: number
+        confidenceScore:
+          type: number
+        problemSolvingScore:
+          type: number
+        overallScore:
+          type: number
+        aiNotes:
+          type: string
+
+    InterviewTranscript:
+      type: object
+      required: [transcript]
+      properties:
+        transcript:
+          type: string
+
+    InterviewAnalysis:
+      type: object
+      required: [technicalScore, communicationScore, relevanceScore, confidenceScore, problemSolvingScore, overallScore, summary, recommendation]
+      properties:
+        technicalScore:
+          type: number
+        communicationScore:
+          type: number
+        relevanceScore:
+          type: number
+        confidenceScore:
+          type: number
+        problemSolvingScore:
+          type: number
+        overallScore:
+          type: number
+        summary:
+          type: string
+        recommendation:
+          type: string
+
+    # ─── Analytics ────────────────────────────────────────────────────────────
+    AnalyticsSummary:
+      type: object
+      required: [totalApplicants, shortlisted, interviewed, hired, rejected, hiringSuccessRate, avgTimeToHire, activeJobs]
+      properties:
+        totalApplicants:
+          type: integer
+        shortlisted:
+          type: integer
+        interviewed:
+          type: integer
+        hired:
+          type: integer
+        rejected:
+          type: integer
+        hiringSuccessRate:
+          type: number
+        avgTimeToHire:
+          type: number
+        activeJobs:
+          type: integer
+
+    FunnelStage:
+      type: object
+      required: [stage, count]
+      properties:
+        stage:
+          type: string
+        count:
+          type: integer
+
+    TimeSeriesPoint:
+      type: object
+      required: [date, count]
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+
+    SkillCount:
+      type: object
+      required: [skill, count]
+      properties:
+        skill:
+          type: string
+        count:
+          type: integer
+
+    # ─── Copilot ──────────────────────────────────────────────────────────────
+    CopilotMessage:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        context:
+          type: ["string", "null"]
+
+    CopilotResponse:
+      type: object
+      required: [response]
+      properties:
+        response:
+          type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+
+    # ─── Onboarding ───────────────────────────────────────────────────────────
+    Onboarding:
+      type: object
+      required: [id, candidateId, jobId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        status:
+          type: string
+        offerAccepted:
+          type: boolean
+        documentsUploaded:
+          type: boolean
+        verificationComplete:
+          type: boolean
+        trainingAssigned:
+          type: boolean
+        joiningDate:
+          type: ["string", "null"]
+        salary:
+          type: ["integer", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        candidate:
+          $ref: "#/components/schemas/Candidate"
+        job:
+          $ref: "#/components/schemas/Job"
+
+    OnboardingInput:
+      type: object
+      required: [candidateId, jobId]
+      properties:
+        candidateId:
+          type: integer
+        jobId:
+          type: integer
+        joiningDate:
+          type: string
+        salary:
+          type: integer
+        notes:
+          type: string
+
+    OnboardingUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        offerAccepted:
+          type: boolean
+        documentsUploaded:
+          type: boolean
+        verificationComplete:
+          type: boolean
+        trainingAssigned:
+          type: boolean
+        joiningDate:
+          type: string
+        salary:
+          type: integer
+        notes:
+          type: string
