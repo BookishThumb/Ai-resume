@@ -39,6 +39,24 @@ async function seed() {
   const newCandidates = [];
   for (let i = 0; i < 50; i++) {
     const score = randInt(50, 100);
+    const recommendation = score >= 90 ? "Strong Hire" : (score >= 75 ? "Hire" : (score >= 60 ? "Maybe" : "Reject"));
+
+    // Status must be logically consistent with recommendation
+    let status: string;
+    if (recommendation === "Reject") {
+      status = "rejected";
+    } else if (recommendation === "Strong Hire" || recommendation === "Hire") {
+      // Strong hires/hires: most are active (in pipeline), some get hired
+      status = Math.random() > 0.7 ? "hired" : "active";
+    } else {
+      // "Maybe" candidates stay active — they haven't been decided on yet
+      status = "active";
+    }
+
+    // Interview score: null if not yet interviewed (low-score rejects), otherwise proportional
+    const hasBeenInterviewed = recommendation !== "Reject" || Math.random() > 0.5;
+    const interviewScore = hasBeenInterviewed ? Math.max(40, score - randInt(-5, 10)) : null;
+
     newCandidates.push({
       id: Math.floor(Math.random() * 1000000),
       name: names[i],
@@ -50,10 +68,10 @@ async function seed() {
       education: Math.random() > 0.5 ? "Bachelor's Degree" : "Master's Degree",
       university: "State University",
       resumeScore: score,
-      interviewScore: score > 70 ? score - randInt(-5, 5) : 0,
+      interviewScore: interviewScore ?? 0,
       finalScore: score,
-      recommendation: score >= 90 ? "Strong Hire" : (score >= 75 ? "Hire" : (score >= 60 ? "Maybe" : "Reject")),
-      status: Math.random() > 0.8 ? "rejected" : (Math.random() > 0.8 ? "hired" : "active"),
+      recommendation,
+      status,
       summary: "A dedicated professional with a strong track record of success in dynamic environments.",
       source: randStr(["LinkedIn", "Job Board", "Referral", "Direct Application"]),
       createdAt: new Date(now.getTime() - randInt(1, 60) * 24 * 60 * 60 * 1000),
@@ -64,14 +82,34 @@ async function seed() {
   console.log(`Added ${insertedCandidates.length} candidates`);
 
   // Generate 100 Applications
-  const statuses = ["applied", "shortlisted", "interviewed", "offered", "hired", "rejected"];
+  // Application status must align with the candidate's recommendation/status
   const newApps = [];
   for (let i = 0; i < 100; i++) {
+    const candidate = randStr(insertedCandidates);
+    let appStatus: string;
+
+    if (candidate.status === "rejected") {
+      // Rejected candidates: application is rejected or early-stage
+      appStatus = Math.random() > 0.3 ? "rejected" : "applied";
+    } else if (candidate.status === "hired") {
+      // Hired candidates: application progressed through the full funnel
+      appStatus = randStr(["hired", "offered"]);
+    } else {
+      // Active candidates: in various stages of the pipeline
+      const rec = candidate.recommendation;
+      if (rec === "Strong Hire" || rec === "Hire") {
+        appStatus = randStr(["shortlisted", "interviewed", "offered"]);
+      } else {
+        // "Maybe" — still early in the process
+        appStatus = randStr(["applied", "shortlisted", "interviewed"]);
+      }
+    }
+
     newApps.push({
       id: Math.floor(Math.random() * 1000000),
-      candidateId: randStr(insertedCandidates).id,
+      candidateId: candidate.id,
       jobId: randStr(insertedJobs).id,
-      status: randStr(statuses),
+      status: appStatus,
       matchScore: randInt(40, 99),
       resumeScore: randInt(50, 95),
       createdAt: new Date(now.getTime() - randInt(1, 30) * 24 * 60 * 60 * 1000),
@@ -107,18 +145,19 @@ async function seed() {
   const insertedInterviews = await db.insert(interviewsTable).values(newInterviews).returning();
   console.log(`Added ${insertedInterviews.length} interviews`);
 
-  // Generate 15 Onboarding records
+  // Generate Onboarding records — ONLY for candidates who were actually hired
+  const hiredCandidates = insertedCandidates.filter(c => (c as any).status === "hired");
   const newOnboardings = [];
-  for (let i = 0; i < 15; i++) {
+  for (const candidate of hiredCandidates) {
     newOnboardings.push({
       id: Math.floor(Math.random() * 1000000),
-      candidateId: randStr(insertedCandidates).id,
+      candidateId: candidate.id,
       jobId: randStr(insertedJobs).id,
       status: randStr(["pending", "in-progress", "completed"]),
-      offerAccepted: Math.random() > 0.3,
-      documentsUploaded: Math.random() > 0.5,
-      verificationComplete: Math.random() > 0.7,
-      trainingAssigned: Math.random() > 0.8,
+      offerAccepted: true,
+      documentsUploaded: Math.random() > 0.3,
+      verificationComplete: Math.random() > 0.5,
+      trainingAssigned: Math.random() > 0.6,
       joiningDate: new Date(now.getTime() + randInt(10, 45) * 24 * 60 * 60 * 1000),
       salary: randInt(80, 160) * 1000,
       notes: "Onboarding process has been initiated for this candidate.",
@@ -127,7 +166,7 @@ async function seed() {
     });
   }
   const insertedOnboardings = await db.insert(onboardingTable).values(newOnboardings).returning();
-  console.log(`Added ${insertedOnboardings.length} onboarding records`);
+  console.log(`Added ${insertedOnboardings.length} onboarding records (only for hired candidates)`);
 
   console.log("✅ Seed complete!");
   process.exit(0);

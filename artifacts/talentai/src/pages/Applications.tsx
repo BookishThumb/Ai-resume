@@ -2,7 +2,7 @@ import { useState } from "react";
 import Layout from "@/components/Layout";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { useListApplications, useUpdateApplication, getListApplicationsQueryKey } from "@workspace/api-client-react";
+import { useListApplications, useUpdateApplication, getListApplicationsQueryKey, getListCandidatesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import ScoreBadge from "@/components/ScoreBadge";
@@ -30,7 +30,9 @@ export default function Applications() {
   const handleStatusChange = (id: number, status: string) => {
     updateApplication.mutate({ id, data: { status } }, {
       onSuccess: () => {
+        // Invalidate both applications and candidates caches so both sides update immediately
         queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListCandidatesQueryKey() });
         toast({ title: `Status updated to ${status}` });
       },
     });

@@ -146,6 +146,15 @@ router.patch("/applications/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Application not found" });
     return;
   }
+
+  // Sync candidate status when application is hired or rejected
+  const newStatus = parsed.data.status;
+  if (newStatus === "hired" || newStatus === "rejected") {
+    await db.update(candidatesTable)
+      .set({ status: newStatus, updatedAt: new Date() })
+      .where(eq(candidatesTable.id, app.candidateId));
+  }
+
   const [candidate] = await db.select().from(candidatesTable).where(eq(candidatesTable.id, app.candidateId));
   const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, app.jobId));
   res.json(formatApp({ ...app, candidate: candidate as Candidate, job: job as Job }));

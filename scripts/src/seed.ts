@@ -201,7 +201,7 @@ async function seed() {
       interviewScore: 76,
       finalScore: 79,
       recommendation: "Hire",
-      status: "active",
+      status: "hired",
       summary: "Aisha is a skilled data analyst with a statistics background. She has run hundreds of A/B tests and built dashboards that inform product decisions for teams of 50+ people.",
       source: "LinkedIn",
       createdAt: now,

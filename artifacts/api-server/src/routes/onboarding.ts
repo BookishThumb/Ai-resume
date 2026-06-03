@@ -34,7 +34,7 @@ router.get("/onboarding", async (req, res): Promise<void> => {
   if (status) conditions.push(eq(onboardingTable.status, status as any));
 
   const onboardings = await db.select().from(onboardingTable).where(conditions.length > 0 ? and(...conditions) : undefined);
-  onboardings.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  onboardings.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const rows = await Promise.all(onboardings.map(async (o: any) => {
     const [candidate] = await db.select().from(candidatesTable).where(eq(candidatesTable.id, o.candidateId));

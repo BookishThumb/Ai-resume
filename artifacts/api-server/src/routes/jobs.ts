@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, jobsTable, applicationsTable, type Job } from "@workspace/db";
+import { db, jobsTable, applicationsTable, interviewsTable, onboardingTable, type Job } from "@workspace/db";
 import { eq, ilike, and } from "drizzle-orm";
 import {
   ListJobsQueryParams,
@@ -36,7 +36,7 @@ router.get("/jobs", async (req, res): Promise<void> => {
   if (search) conditions.push(ilike(jobsTable.title, `%${search}%`));
 
   const jobs = await db.select().from(jobsTable).where(conditions.length > 0 ? and(...conditions) : undefined);
-  jobs.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  jobs.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const formatted = await Promise.all(jobs.map(formatJob));
   res.json(formatted);
@@ -114,6 +114,12 @@ router.delete("/jobs/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Job not found" });
     return;
   }
+  
+  // Cascade delete associated records
+  await db.delete(applicationsTable).where(eq(applicationsTable.jobId, params.data.id));
+  await db.delete(interviewsTable).where(eq(interviewsTable.jobId, params.data.id));
+  await db.delete(onboardingTable).where(eq(onboardingTable.jobId, params.data.id));
+  
   await db.delete(jobsTable).where(eq(jobsTable.id, params.data.id));
   res.sendStatus(204);
 });

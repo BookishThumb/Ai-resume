@@ -158,6 +158,21 @@ router.post("/interviews/:id/analyze", async (req, res): Promise<void> => {
     updatedAt: new Date()
   }).where(eq(interviewsTable.id, params.data.id));
 
+  const [interview] = await db.select().from(interviewsTable).where(eq(interviewsTable.id, params.data.id));
+  if (interview) {
+    const [candidate] = await db.select().from(candidatesTable).where(eq(candidatesTable.id, interview.candidateId));
+    if (candidate) {
+      const resumeScore = candidate.resumeScore || 70;
+      const finalScore = Math.round(resumeScore * 0.4 + overallScore * 0.6);
+      await db.update(candidatesTable).set({
+        interviewScore: overallScore,
+        finalScore: finalScore,
+        recommendation: recommendation,
+        updatedAt: new Date()
+      }).where(eq(candidatesTable.id, candidate.id));
+    }
+  }
+
   res.json({
     technicalScore: technical,
     communicationScore: communication,
