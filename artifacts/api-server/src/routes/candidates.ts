@@ -159,7 +159,7 @@ router.post("/candidates/:id/upload-resume", upload.single("file"), async (req, 
     // We'll just store the text so it can be analyzed
     await db.update(candidatesTable)
       .set({ resumeText: text })
-      .where(eq(candidatesTable.id, parseInt(id, 10)));
+      .where(eq(candidatesTable.id, parseInt(id as string, 10)));
 
     res.json({ success: true });
   } catch (error) {
@@ -321,12 +321,9 @@ router.get("/candidates/:id/resume-analysis", async (req, res): Promise<void> =>
     strengths: strengths.length > 0 ? strengths : ["Demonstrated professional experience"],
     weaknesses: weaknesses.length > 0 ? weaknesses : ["Profile completeness could be improved"],
     missingSkills,
-    recommendedRoles: skills.includes("React") || skills.includes("Vue")
-      ? ["Frontend Engineer", "Full Stack Developer", "UI Engineer"]
-      : skills.includes("Python") || skills.includes("Machine Learning")
-        ? ["ML Engineer", "Data Scientist", "AI Researcher"]
-        : ["Software Engineer", "Backend Developer", "Technical Lead"],
+    recommendedRoles: recommendedRoles.length > 0 ? recommendedRoles : ["Software Engineer"],
     hiringRecommendation,
+    score: scoreNum
   });
 });
 

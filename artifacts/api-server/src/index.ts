@@ -2,13 +2,19 @@ import app from "./app";
 import { logger } from "./lib/logger";
 
 // Polyfills for pdf.js (used by pdf-parse >= 2)
+// @ts-ignore
 if (typeof globalThis.DOMMatrix === 'undefined') {
+  // @ts-ignore
   globalThis.DOMMatrix = class DOMMatrix {} as any;
 }
+// @ts-ignore
 if (typeof globalThis.ImageData === 'undefined') {
+  // @ts-ignore
   globalThis.ImageData = class ImageData {} as any;
 }
+// @ts-ignore
 if (typeof globalThis.Path2D === 'undefined') {
+  // @ts-ignore
   globalThis.Path2D = class Path2D {} as any;
 }
 

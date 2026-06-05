@@ -1,11 +1,11 @@
 import fs from "fs/promises";
-import { PDFParse } from "pdf-parse";
+import pdfParse from "pdf-parse-new";
 import mammoth from "mammoth";
 import { parse } from "csv-parse/sync";
 
 export async function extractTextFromBuffer(buffer: Buffer, mimetype: string): Promise<string> {
   if (mimetype === "application/pdf") {
-    const data = await PDFParse(buffer);
+    const data = await pdfParse(buffer);
     return data.text;
   }
 

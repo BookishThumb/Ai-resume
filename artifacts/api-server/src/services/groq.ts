@@ -47,7 +47,7 @@ ${resumeText}
   try {
     const chatCompletion = await groq.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "llama3-8b-8192", // Using a fast/cheap model for extraction, can upgrade to llama3-70b-8192
+      model: "llama-3.1-8b-instant", // Using a fast/cheap model for extraction, can upgrade to llama-3.1-70b-versatile
       temperature: 0.1,
       response_format: { type: "json_object" },
     });
@@ -104,7 +104,7 @@ ${resumeText}
   try {
     const chatCompletion = await groq.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "llama3-8b-8192",
+      model: "llama-3.1-8b-instant",
       temperature: 0.2,
       response_format: { type: "json_object" },
     });
@@ -178,7 +178,7 @@ ${transcript}
   try {
     const chatCompletion = await groq.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "llama3-8b-8192",
+      model: "llama-3.1-8b-instant",
       temperature: 0.2,
       response_format: { type: "json_object" },
     });

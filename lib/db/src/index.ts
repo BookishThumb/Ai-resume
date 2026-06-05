@@ -25,6 +25,7 @@ export const db = drizzle(pool, { schema });
 export * from "./schema/index.js";
 
 // Export the inferred types
+export type User = typeof schema.usersTable.$inferSelect;
 export type Job = typeof schema.jobsTable.$inferSelect;
 export type Candidate = typeof schema.candidatesTable.$inferSelect;
 export type Application = typeof schema.applicationsTable.$inferSelect;
