@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
-  LayoutDashboard, Search, FileText, Calendar, LogOut, Brain
+  LayoutDashboard, Search, FileText, Calendar, LogOut, Brain, ClipboardCheck
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/find-jobs", label: "Find Jobs", icon: Search },
   { href: "/my-applications", label: "My Applications", icon: FileText },
   { href: "/my-interviews", label: "Interviews", icon: Calendar },
+  { href: "/my-onboarding", label: "Onboarding", icon: ClipboardCheck },
 ];
 
 export default function CandidateLayout({ children }: { children: React.ReactNode }) {

@@ -14,6 +14,7 @@ import CandidateJobs from "@/pages/CandidateJobs";
 import CandidateJobDetail from "@/pages/CandidateJobDetail";
 import CandidateApplications from "@/pages/CandidateApplications";
 import CandidateInterviews from "@/pages/CandidateInterviews";
+import CandidateOnboarding from "@/pages/CandidateOnboarding";
 import Jobs from "@/pages/Jobs";
 import JobNew from "@/pages/JobNew";
 import JobDetail from "@/pages/JobDetail";
@@ -59,6 +60,7 @@ function Router() {
       <Route path="/interviews/:id" component={InterviewDetail} />
       <Route path="/interviews" component={Interviews} />
       <Route path="/my-interviews" component={CandidateInterviews} />
+      <Route path="/my-onboarding" component={CandidateOnboarding} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/copilot" component={Copilot} />
       <Route path="/onboarding/:id" component={OnboardingDetail} />
