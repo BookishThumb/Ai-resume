@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard, Search, FileText, Calendar, LogOut, Brain
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const navItems = [
   { href: "/candidate-dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -12,7 +14,21 @@ const navItems = [
 ];
 
 export default function CandidateLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setLocation("/login");
+    } else if (!isLoading && isAuthenticated && user?.role !== "candidate") {
+      // Prevent HR/Admin from accessing Candidate dashboard
+      setLocation("/dashboard");
+    }
+  }, [isLoading, isAuthenticated, user, location, setLocation]);
+
+  if (isLoading || !isAuthenticated || user?.role !== "candidate") {
+    return <div className="h-screen bg-background flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="h-screen bg-background flex text-foreground overflow-hidden">
@@ -25,7 +41,7 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
               <Brain className="w-4 h-4 text-white" />
             </div>
             <span className="text-lg font-bold font-heading bg-gradient-to-r from-primary via-violet-400 to-blue-400 bg-clip-text text-transparent">
-              TalentAI
+              Matchpoint
             </span>
             <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full ml-1">Candidate</span>
           </div>
@@ -57,14 +73,17 @@ export default function CandidateLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        {/* Footer */}
         <div className="p-4 border-t border-white/5">
-          <Link href="/login">
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 cursor-pointer transition-colors">
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </div>
-          </Link>
+          <div 
+            onClick={() => {
+              logout();
+              setLocation("/login");
+            }}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 cursor-pointer transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </div>
         </div>
       </aside>
 

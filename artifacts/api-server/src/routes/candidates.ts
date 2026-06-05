@@ -10,12 +10,20 @@ import {
   GetCandidateResumeAnalysisParams,
   GetCandidateMatchScoreParams,
 } from "@workspace/api-zod";
+import jwt from "jsonwebtoken";
+import multer from "multer";
+import { extractTextFromBuffer, parseCsvCandidates } from "../services/resume-parser";
+import { parseResumeWithAI, analyzeResumeWithAI } from "../services/groq";
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router: IRouter = Router();
+const JWT_SECRET = process.env.JWT_SECRET || "matchpoint-super-secret-key-123";
 
 function formatCandidate(c: Candidate) {
+  const { password, ...rest } = c;
   return {
-    ...c,
+    ...rest,
     createdAt: new Date(c.createdAt).toISOString(),
   };
 }
@@ -65,6 +73,101 @@ router.post("/candidates", async (req, res): Promise<void> => {
   res.status(201).json(formatCandidate(c as Candidate));
 });
 
+router.post("/candidates/bulk-upload", upload.array("files"), async (req, res): Promise<void> => {
+  if (!req.files || !Array.isArray(req.files)) {
+    res.status(400).json({ error: "No files uploaded" });
+    return;
+  }
+
+  let successful = 0;
+  let failed = 0;
+  const createdCandidates = [];
+
+  for (const file of req.files) {
+    try {
+      if (file.mimetype === "text/csv") {
+        const parsedCsv = await parseCsvCandidates(file.buffer);
+        for (const data of parsedCsv) {
+          try {
+            const [c] = await db.insert(candidatesTable).values({
+              name: data.name,
+              email: data.email,
+              phone: data.phone,
+              skills: data.skills,
+              experience: data.experience,
+              education: data.education,
+              university: data.university,
+              summary: data.summary,
+              status: "active",
+              resumeScore: 0,
+              interviewScore: 0,
+              finalScore: 0,
+            }).returning();
+            createdCandidates.push(formatCandidate(c as Candidate));
+            successful++;
+          } catch (e) {
+            failed++;
+          }
+        }
+      } else {
+        const text = await extractTextFromBuffer(file.buffer, file.mimetype);
+        const parsed = await parseResumeWithAI(text);
+
+        const [c] = await db.insert(candidatesTable).values({
+          name: parsed.name,
+          email: parsed.email,
+          phone: parsed.phone,
+          skills: parsed.skills,
+          experience: parsed.experience,
+          education: parsed.education,
+          university: parsed.university,
+          summary: parsed.summary,
+          resumeText: text,
+          status: "active",
+          resumeScore: 0,
+          interviewScore: 0,
+          finalScore: 0,
+        }).returning();
+        createdCandidates.push(formatCandidate(c as Candidate));
+        successful++;
+      }
+    } catch (error) {
+      console.error("Failed to process file:", file.originalname, error);
+      failed++;
+    }
+  }
+
+  res.json({
+    total: successful + failed,
+    successful,
+    failed,
+    candidates: createdCandidates
+  });
+});
+
+router.post("/candidates/:id/upload-resume", upload.single("file"), async (req, res): Promise<void> => {
+  const { id } = req.params;
+  if (!req.file) {
+    res.status(400).json({ error: "No file uploaded" });
+    return;
+  }
+
+  try {
+    const text = await extractTextFromBuffer(req.file.buffer, req.file.mimetype);
+    
+    // Optionally re-parse data from text and update candidate, or just store text
+    // We'll just store the text so it can be analyzed
+    await db.update(candidatesTable)
+      .set({ resumeText: text })
+      .where(eq(candidatesTable.id, parseInt(id, 10)));
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Upload error:", error);
+    res.status(500).json({ error: "Failed to process resume file" });
+  }
+});
+
 router.post("/candidates/login", async (req, res): Promise<void> => {
   const { name, password } = req.body;
   if (!name || !password) {
@@ -84,7 +187,9 @@ router.post("/candidates/login", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json({ success: true, candidateId: c.id });
+  const token = jwt.sign({ id: c.id, role: "candidate" }, JWT_SECRET, { expiresIn: "7d" });
+
+  res.json({ success: true, candidateId: c.id, token });
 });
 
 router.get("/candidates/:id", async (req, res): Promise<void> => {
@@ -139,47 +244,80 @@ router.get("/candidates/:id/resume-analysis", async (req, res): Promise<void> =>
     return;
   }
 
-  const skills = c.skills ?? [];
-  const experience = c.experience ?? 0;
-  const strengths: string[] = [];
-  const weaknesses: string[] = [];
-  const missingSkills: string[] = [];
-
-  if (experience >= 5) strengths.push("Extensive professional experience");
-  if (experience >= 3) strengths.push("Solid industry background");
-  if (skills.length >= 8) strengths.push("Broad technical skill set");
-  if (skills.includes("Python") || skills.includes("JavaScript") || skills.includes("TypeScript"))
-    strengths.push("Proficiency in in-demand programming languages");
-  if (c.education && (c.education.includes("Master") || c.education.includes("PhD")))
-    strengths.push("Advanced academic credentials");
-  if (c.university) strengths.push("Reputable educational background");
-  if (strengths.length < 2) strengths.push("Demonstrated project contributions");
-
-  if (experience < 2) weaknesses.push("Limited professional experience — strong portfolio can compensate");
-  if (skills.length < 5) weaknesses.push("Narrower technical skill breadth than typical candidates");
-  if (!c.education || c.education.includes("Bachelor")) weaknesses.push("No advanced degree on record");
-
-  const demandedSkills = ["Docker", "Kubernetes", "AWS", "System Design", "GraphQL", "TypeScript", "PostgreSQL"];
-  for (const s of demandedSkills) {
-    if (!skills.map(sk => sk.toLowerCase()).includes(s.toLowerCase())) {
-      missingSkills.push(s);
-    }
-    if (missingSkills.length >= 3) break;
-  }
-
-  const scoreNum = c.finalScore ?? (c.resumeScore ?? 70);
+  let strengths: string[] = [];
+  let weaknesses: string[] = [];
+  let missingSkills: string[] = [];
+  let recommendedRoles: string[] = [];
   let hiringRecommendation = "Maybe";
-  if (scoreNum +
-        (c.skills?.some((s: any) => typeof s === 'string' && s.toLowerCase().includes("python")) ? 20 : 0) +
-        (c.skills?.some((s: any) => typeof s === 'string' && s.toLowerCase().includes("react")) ? 15 : 0) +
-        (c.skills?.some((s: any) => typeof s === 'string' && s.toLowerCase().includes("node")) ? 15 : 0) +
-        (c.skills?.some((s: any) => typeof s === 'string' && s.toLowerCase().includes("aws")) ? 10 : 0) >= 90) hiringRecommendation = "Strong Hire";
-  else if (scoreNum >= 80) hiringRecommendation = "Hire";
-  else if (scoreNum < 65) hiringRecommendation = "Reject";
+  let scoreNum = c.finalScore ?? (c.resumeScore ?? 70);
+
+  if (c.resumeText) {
+    try {
+      const aiAnalysis = await analyzeResumeWithAI(c.resumeText);
+      strengths = aiAnalysis.strengths;
+      weaknesses = aiAnalysis.weaknesses;
+      missingSkills = aiAnalysis.missingSkills;
+      recommendedRoles = aiAnalysis.recommendedRoles;
+      hiringRecommendation = aiAnalysis.hiringRecommendation;
+      scoreNum = aiAnalysis.score;
+      
+      // Update DB with AI score
+      await db.update(candidatesTable)
+        .set({ 
+          resumeScore: scoreNum, 
+          finalScore: scoreNum, 
+          recommendation: hiringRecommendation 
+        })
+        .where(eq(candidatesTable.id, c.id));
+    } catch (e) {
+      console.error("AI analysis fallback", e);
+    }
+  }
+  
+  if (strengths.length === 0) {
+    const skills = c.skills ?? [];
+    const experience = c.experience ?? 0;
+
+    if (experience >= 5) strengths.push("Extensive professional experience");
+    if (experience >= 3) strengths.push("Solid industry background");
+    if (skills.length >= 8) strengths.push("Broad technical skill set");
+    if (skills.includes("Python") || skills.includes("JavaScript") || skills.includes("TypeScript"))
+      strengths.push("Proficiency in in-demand programming languages");
+    if (c.education && (c.education.includes("Master") || c.education.includes("PhD")))
+      strengths.push("Advanced academic credentials");
+    if (c.university) strengths.push("Reputable educational background");
+    if (strengths.length < 2) strengths.push("Demonstrated project contributions");
+
+    if (experience < 2) weaknesses.push("Limited professional experience — strong portfolio can compensate");
+    if (skills.length < 5) weaknesses.push("Narrower technical skill breadth than typical candidates");
+    if (!c.education || c.education.includes("Bachelor")) weaknesses.push("No advanced degree on record");
+
+    const demandedSkills = ["Docker", "Kubernetes", "AWS", "System Design", "GraphQL", "TypeScript", "PostgreSQL"];
+    for (const s of demandedSkills) {
+      if (!skills.map(sk => sk.toLowerCase()).includes(s.toLowerCase())) {
+        missingSkills.push(s);
+      }
+      if (missingSkills.length >= 3) break;
+    }
+
+    if (scoreNum +
+          (c.skills?.some((s: any) => typeof s === 'string' && s.toLowerCase().includes("python")) ? 20 : 0) +
+          (c.skills?.some((s: any) => typeof s === 'string' && s.toLowerCase().includes("react")) ? 15 : 0) +
+          (c.skills?.some((s: any) => typeof s === 'string' && s.toLowerCase().includes("node")) ? 15 : 0) +
+          (c.skills?.some((s: any) => typeof s === 'string' && s.toLowerCase().includes("aws")) ? 10 : 0) >= 90) hiringRecommendation = "Strong Hire";
+    else if (scoreNum >= 80) hiringRecommendation = "Hire";
+    else if (scoreNum < 65) hiringRecommendation = "Reject";
+    
+    recommendedRoles = skills.includes("React") || skills.includes("Vue")
+      ? ["Frontend Engineer", "Full Stack Developer", "UI Engineer"]
+      : skills.includes("Python") || skills.includes("Machine Learning")
+        ? ["ML Engineer", "Data Scientist", "AI Researcher"]
+        : ["Software Engineer", "Backend Developer", "Technical Lead"];
+  }
 
   res.json({
     candidateId: c.id,
-    summary: c.summary ?? `${c.name} is a ${experience}-year experienced professional with skills in ${skills.slice(0, 3).join(", ")}. Their profile shows ${strengths[0]?.toLowerCase() ?? "solid potential"} and they are positioned for ${hiringRecommendation === "Reject" ? "entry-level" : "mid-to-senior"} roles.`,
+    summary: c.summary ?? `${c.name} is a ${c.experience}-year experienced professional with skills in ${c.skills?.slice(0, 3).join(", ")}. Their profile shows ${strengths[0]?.toLowerCase() ?? "solid potential"} and they are positioned for ${hiringRecommendation === "Reject" ? "entry-level" : "mid-to-senior"} roles.`,
     strengths: strengths.length > 0 ? strengths : ["Demonstrated professional experience"],
     weaknesses: weaknesses.length > 0 ? weaknesses : ["Profile completeness could be improved"],
     missingSkills,

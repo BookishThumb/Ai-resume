@@ -16,6 +16,8 @@ export interface Interview {
   /** @nullable */
   scheduledAt?: string | null;
   /** @nullable */
+  videoUrl?: string | null;
+  /** @nullable */
   transcript?: string | null;
   /** @nullable */
   technicalScore?: number | null;

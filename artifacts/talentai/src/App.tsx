@@ -26,6 +26,9 @@ import Analytics from "@/pages/Analytics";
 import Copilot from "@/pages/Copilot";
 import Onboarding from "@/pages/Onboarding";
 import OnboardingDetail from "@/pages/OnboardingDetail";
+import BulkUpload from "@/pages/BulkUpload";
+import VideoInterview from "@/pages/VideoInterview";
+import InterviewReview from "@/pages/InterviewReview";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +63,9 @@ function Router() {
       <Route path="/copilot" component={Copilot} />
       <Route path="/onboarding/:id" component={OnboardingDetail} />
       <Route path="/onboarding" component={Onboarding} />
+      <Route path="/bulk-upload" component={BulkUpload} />
+      <Route path="/video-interview/:id" component={VideoInterview} />
+      <Route path="/interviews/:id/review" component={InterviewReview} />
       <Route component={NotFound} />
     </Switch>
   );

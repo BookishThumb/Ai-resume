@@ -52,7 +52,7 @@ export default function Interviews() {
               const StatusIcon = config.icon;
               return (
                 <motion.div key={interview.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                  <Link href={`/interviews/${interview.id}`}>
+                  <Link href={`/interviews/${interview.id}/review`}>
                     <div className="glass-panel p-5 rounded-xl flex items-center gap-4 hover:bg-white/5 transition-colors cursor-pointer"
                       data-testid={`interview-row-${interview.id}`}>
                       <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">

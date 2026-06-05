@@ -9,6 +9,49 @@ export interface HealthStatus {
   status: string;
 }
 
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+
+
+export const UserRole = {
+  hr: 'hr',
+  recruiter: 'recruiter',
+  admin: 'admin',
+} as const;
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export type RegisterCredentialsRole = typeof RegisterCredentialsRole[keyof typeof RegisterCredentialsRole];
+
+
+export const RegisterCredentialsRole = {
+  hr: 'hr',
+  recruiter: 'recruiter',
+  admin: 'admin',
+} as const;
+
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+  role: RegisterCredentialsRole;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
 export interface Job {
   id: number;
   title: string;
@@ -90,6 +133,7 @@ export interface Candidate {
 export interface CandidateInput {
   name: string;
   email: string;
+  password: string;
   phone?: string;
   location?: string;
   skills?: string[];
@@ -202,6 +246,8 @@ export interface Interview {
   status: string;
   /** @nullable */
   scheduledAt?: string | null;
+  /** @nullable */
+  videoUrl?: string | null;
   /** @nullable */
   transcript?: string | null;
   /** @nullable */
@@ -333,6 +379,15 @@ export interface OnboardingUpdate {
   notes?: string;
 }
 
+export interface OnboardingDocument {
+  id: number;
+  onboardingId: number;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  uploadedAt: string;
+}
+
 export type ListJobsParams = {
 status?: string;
 search?: string;
@@ -344,6 +399,25 @@ export type ListCandidatesParams = {
 search?: string;
 status?: string;
 jobId?: number;
+};
+
+export type BulkUploadCandidatesBody = {
+  files?: Blob[];
+};
+
+export type BulkUploadCandidates200 = {
+  total?: number;
+  successful?: number;
+  failed?: number;
+  candidates?: Candidate[];
+};
+
+export type UploadCandidateResumeBody = {
+  file?: Blob;
+};
+
+export type UploadCandidateResume200 = {
+  success?: boolean;
 };
 
 export type ListApplicationsParams = {
@@ -362,6 +436,10 @@ jobId?: number;
 status?: string;
 };
 
+export type UploadInterviewVideoBody = {
+  file?: Blob;
+};
+
 export type GetHiringFunnelParams = {
 jobId?: number;
 };
@@ -374,5 +452,9 @@ jobId?: number;
 export type ListOnboardingsParams = {
 candidateId?: number;
 status?: string;
+};
+
+export type UploadOnboardingDocumentBody = {
+  file?: Blob;
 };
 

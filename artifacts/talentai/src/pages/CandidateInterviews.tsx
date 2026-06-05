@@ -1,6 +1,7 @@
 import CandidateLayout from "@/components/CandidateLayout";
-import { Calendar, Video } from "lucide-react";
+import { Calendar, Video, CheckCircle } from "lucide-react";
 import { useListInterviews } from "@workspace/api-client-react";
+import { Link } from "wouter";
 
 export default function CandidateInterviews() {
   const candidateIdStr = localStorage.getItem("candidateId");
@@ -45,9 +46,17 @@ export default function CandidateInterviews() {
                     {interview.status}
                   </span>
                   {interview.status === 'scheduled' && (
-                    <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
-                      <Video className="w-4 h-4" />
-                      Join Call
+                    <Link href={`/video-interview/${interview.id}`}>
+                      <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+                        <Video className="w-4 h-4" />
+                        Start Video Interview
+                      </button>
+                    </Link>
+                  )}
+                  {interview.status === 'completed' && (
+                    <button disabled className="flex items-center gap-2 px-4 py-2 bg-white/10 text-muted-foreground rounded-md text-sm font-medium transition-colors cursor-not-allowed">
+                      <CheckCircle className="w-4 h-4 text-emerald-500" />
+                      Completed
                     </button>
                   )}
                 </div>

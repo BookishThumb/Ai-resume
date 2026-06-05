@@ -2,8 +2,10 @@ import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard, Briefcase, Users, FileText, Video,
-  BarChart2, MessageSquare, UserCheck, LogOut, Brain
+  BarChart2, MessageSquare, UserCheck, LogOut, Brain, UploadCloud
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -11,13 +13,28 @@ const navItems = [
   { href: "/candidates", label: "Candidates", icon: Users },
   { href: "/applications", label: "Applications", icon: FileText },
   { href: "/interviews", label: "Interviews", icon: Video },
+  { href: "/bulk-upload", label: "Bulk Upload", icon: UploadCloud },
   { href: "/analytics", label: "Analytics", icon: BarChart2 },
   { href: "/copilot", label: "AI Copilot", icon: MessageSquare },
   { href: "/onboarding", label: "Onboarding", icon: UserCheck },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setLocation("/login");
+    } else if (!isLoading && isAuthenticated && user?.role === "candidate") {
+      // Prevent candidates from accessing HR dashboard
+      setLocation("/candidate-dashboard");
+    }
+  }, [isLoading, isAuthenticated, user, location, setLocation]);
+
+  if (isLoading || !isAuthenticated || user?.role === "candidate") {
+    return <div className="h-screen bg-background flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="h-screen bg-background flex text-foreground overflow-hidden">
@@ -30,7 +47,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Brain className="w-4 h-4 text-white" />
             </div>
             <span className="text-lg font-bold font-heading bg-gradient-to-r from-primary via-violet-400 to-blue-400 bg-clip-text text-transparent">
-              TalentAI
+              Matchpoint
             </span>
           </div>
         </div>
@@ -61,14 +78,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Footer */}
         <div className="p-4 border-t border-white/5">
-          <Link href="/login">
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 cursor-pointer transition-colors">
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </div>
-          </Link>
+          <div 
+            onClick={() => {
+              logout();
+              setLocation("/login");
+            }}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 cursor-pointer transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </div>
         </div>
       </aside>
 

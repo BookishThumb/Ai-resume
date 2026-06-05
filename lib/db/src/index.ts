@@ -30,3 +30,4 @@ export type Candidate = typeof schema.candidatesTable.$inferSelect;
 export type Application = typeof schema.applicationsTable.$inferSelect;
 export type Interview = typeof schema.interviewsTable.$inferSelect;
 export type Onboarding = typeof schema.onboardingTable.$inferSelect;
+export type OnboardingDocument = typeof schema.onboardingDocumentsTable.$inferSelect;

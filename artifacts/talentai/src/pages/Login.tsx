@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const [role, setRole] = useState<"candidate" | "recruiter">("candidate");
-  const [name, setName] = useState("");
+  const { login: setAuth } = useAuth();
+  const [role, setRole] = useState<"candidate" | "recruiter" | "admin">("candidate");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,24 +23,32 @@ export default function Login() {
         const res = await fetch("/api/candidates/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, password })
+          body: JSON.stringify({ name: identifier, password })
         });
         
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Login failed");
         
-        localStorage.setItem("candidateId", data.candidateId.toString());
+        setAuth(data.token, { id: data.candidateId, name: identifier, role: "candidate" });
         setLocation("/candidate-dashboard");
       } else {
-        const res = await fetch("/api/recruiter/login", {
+        const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: name, password })
+          body: JSON.stringify({ email: identifier, password })
         });
         
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Login failed");
         
+        // Ensure role matches intended login method if we want to be strict,
+        // but for now, successfully authenticating against /auth/login is sufficient
+        // as long as the user role is authorized for the dashboard.
+        if (data.user.role !== role && data.user.role !== "admin") {
+          throw new Error(`Account does not have ${role} privileges.`);
+        }
+
+        setAuth(data.token, data.user);
         setLocation("/dashboard");
       }
     } catch (err: any) {
@@ -60,29 +70,38 @@ export default function Login() {
         
         <div className="flex bg-muted/50 p-1 rounded-lg mb-6">
           <button 
+            type="button"
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${role === "candidate" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            onClick={() => { setRole("candidate"); setError(""); }}
+            onClick={() => { setRole("candidate"); setError(""); setIdentifier(""); }}
           >
             Candidate
           </button>
           <button 
+            type="button"
             className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${role === "recruiter" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            onClick={() => { setRole("recruiter"); setError(""); }}
+            onClick={() => { setRole("recruiter"); setError(""); setIdentifier(""); }}
           >
-            Recruiter
+            HR/Recruiter
+          </button>
+          <button 
+            type="button"
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${role === "admin" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            onClick={() => { setRole("admin"); setError(""); setIdentifier(""); }}
+          >
+            Admin
           </button>
         </div>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4 mb-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              {role === "candidate" ? "Candidate Name" : "Username"}
+              {role === "candidate" ? "Candidate Name" : "Email Address"}
             </label>
             <Input 
-              type="text" 
-              placeholder={role === "candidate" ? "e.g. Rounak Banerjee" : "e.g. admin"} 
-              value={name}
-              onChange={e => setName(e.target.value)}
+              type={role === "candidate" ? "text" : "email"}
+              placeholder={role === "candidate" ? "e.g. Rounak Banerjee" : "name@company.com"} 
+              value={identifier}
+              onChange={e => setIdentifier(e.target.value)}
               required
             />
           </div>
@@ -98,24 +117,14 @@ export default function Login() {
           </div>
           {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
           <Button type="submit" className="w-full h-12 text-lg" disabled={isLoading}>
-            {isLoading ? "Logging in..." : `Login as ${role === "candidate" ? "Candidate" : "HR Recruiter"}`}
+            {isLoading ? "Logging in..." : `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`}
           </Button>
         </form>
 
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-muted-foreground/20" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background/80 px-2 text-muted-foreground">Or</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <Link href="/dashboard">
-            <Button variant="ghost" className="w-full h-12 text-lg">
-              Login as Admin
-            </Button>
+        <div className="mt-4 text-center text-sm text-muted-foreground">
+          Don't have an account?{" "}
+          <Link href="/register" className="text-primary hover:underline font-medium">
+            Register here
           </Link>
         </div>
       </div>

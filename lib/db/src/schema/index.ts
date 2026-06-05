@@ -15,6 +15,16 @@ export const jobsTable = pgTable("jobs", {
   updatedAt: timestamp("updated_at").notNull().defaultNow()
 });
 
+export const usersTable = pgTable("users", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  role: text("role", { enum: ["hr", "recruiter", "admin"] }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
 export const candidatesTable = pgTable("candidates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -33,6 +43,7 @@ export const candidatesTable = pgTable("candidates", {
   status: text("status", { enum: ["active", "rejected", "hired", "withdrawn"] }).notNull(),
   summary: text("summary"),
   source: text("source"),
+  resumeText: text("resume_text"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()
 });
@@ -54,6 +65,7 @@ export const interviewsTable = pgTable("interviews", {
   jobId: integer("job_id").notNull(),
   status: text("status", { enum: ["scheduled", "completed", "cancelled"] }).notNull(),
   scheduledAt: timestamp("scheduled_at"),
+  videoUrl: text("video_url"),
   transcript: text("transcript"),
   technicalScore: integer("technical_score"),
   communicationScore: integer("communication_score"),
@@ -80,4 +92,13 @@ export const onboardingTable = pgTable("onboarding", {
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+export const onboardingDocumentsTable = pgTable("onboarding_documents", {
+  id: serial("id").primaryKey(),
+  onboardingId: integer("onboarding_id").notNull(),
+  fileName: text("file_name").notNull(),
+  fileUrl: text("file_url").notNull(),
+  fileType: text("file_type").notNull(),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow()
 });

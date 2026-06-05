@@ -10,7 +10,10 @@ import {
   AnalyzeInterviewParams,
   AnalyzeInterviewBody,
 } from "@workspace/api-zod";
+import multer from "multer";
+import { transcribeAudio, analyzeInterviewTranscript } from "../services/groq";
 
+const upload = multer({ dest: "uploads/videos/" });
 const router: IRouter = Router();
 
 function formatInterview(row: Interview & { candidate?: Candidate | null, job?: Job | null }) {
@@ -83,6 +86,56 @@ router.get("/interviews/:id", async (req, res): Promise<void> => {
   const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, interview.jobId));
   
   res.json(formatInterview({ ...interview, candidate: candidate as Candidate, job: job as Job }));
+});
+
+router.post("/interviews/:id/upload-video", upload.single("file"), async (req, res): Promise<void> => {
+  const params = GetInterviewParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const { id } = params.data;
+  if (!req.file) {
+    res.status(400).json({ error: "No video file uploaded" });
+    return;
+  }
+
+  const videoPath = req.file.path;
+
+  try {
+    // 1. Transcribe audio from the video
+    const transcript = await transcribeAudio(videoPath);
+
+    // 2. Analyze the transcript using Llama3
+    const analysis = await analyzeInterviewTranscript(transcript);
+
+    // 3. Update the interview record
+    const [updatedInterview] = await db.update(interviewsTable)
+      .set({
+        status: "completed",
+        videoUrl: videoPath,
+        transcript,
+        technicalScore: analysis.technicalScore,
+        communicationScore: analysis.communicationScore,
+        confidenceScore: analysis.confidenceScore,
+        overallScore: analysis.overallScore,
+        aiNotes: analysis.aiNotes,
+        updatedAt: new Date(),
+      })
+      .where(eq(interviewsTable.id, id))
+      .returning();
+
+    // Also update the candidate's finalScore tentatively
+    await db.update(candidatesTable)
+      .set({ interviewScore: analysis.overallScore })
+      .where(eq(candidatesTable.id, updatedInterview.candidateId));
+
+    res.json(formatInterview(updatedInterview as any));
+  } catch (error) {
+    console.error("Video upload/analysis failed:", error);
+    res.status(500).json({ error: "Failed to process the interview video" });
+  }
 });
 
 router.patch("/interviews/:id", async (req, res): Promise<void> => {

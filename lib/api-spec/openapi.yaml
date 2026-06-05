@@ -40,6 +40,68 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  # ─── Auth ────────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterCredentials"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Login for HR/Recruiter/Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginCredentials"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get currently authenticated user
+      responses:
+        "200":
+          description: Current user data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
   # ─── Jobs ────────────────────────────────────────────────────────────────────
   /jobs:
     get:
@@ -187,11 +249,79 @@ paths:
               $ref: "#/components/schemas/CandidateInput"
       responses:
         "201":
-          description: Created candidate
+          description: Created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Candidate"
+
+  /candidates/bulk-upload:
+    post:
+      operationId: bulkUploadCandidates
+      tags: [candidates]
+      summary: Bulk upload candidate resumes (PDF, DOCX) or CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: Upload results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  successful:
+                    type: integer
+                  failed:
+                    type: integer
+                  candidates:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Candidate"
+
+  /candidates/{id}/upload-resume:
+    post:
+      operationId: uploadCandidateResume
+      tags: [candidates]
+      summary: Upload a single resume for an existing candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
 
   /candidates/{id}:
     get:
@@ -481,6 +611,35 @@ paths:
               schema:
                 $ref: "#/components/schemas/Interview"
 
+  /interviews/{id}/upload-video:
+    post:
+      operationId: uploadInterviewVideo
+      tags: [interviews]
+      summary: Upload a recorded video for an interview session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Video uploaded and analyzed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interview"
+
   /interviews/{id}/analyze:
     post:
       operationId: analyzeInterview
@@ -700,6 +859,74 @@ paths:
               schema:
                 $ref: "#/components/schemas/Onboarding"
 
+  /onboarding/{id}/documents:
+    get:
+      operationId: getOnboardingDocuments
+      tags: [onboarding]
+      summary: Get all documents for an onboarding record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OnboardingDocument"
+    post:
+      operationId: uploadOnboardingDocument
+      tags: [onboarding]
+      summary: Upload a document for onboarding
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Document uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingDocument"
+
+  /onboarding/{id}/generate-offer:
+    post:
+      operationId: generateOfferLetter
+      tags: [onboarding]
+      summary: Generate an offer letter PDF
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: PDF buffer/link returned
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
 components:
   schemas:
     HealthStatus:
@@ -710,7 +937,56 @@ components:
       required:
         - status
 
-    # ─── Job ──────────────────────────────────────────────────────────────────
+    # ─── Auth ──────────────────────────────────────────────────────────────────
+    User:
+      type: object
+      required: [id, name, email, role, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [hr, recruiter, admin]
+        createdAt:
+          type: string
+
+    LoginCredentials:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    RegisterCredentials:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [hr, recruiter, admin]
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    # ─── Common ──────────────────────────────────────────────────────────────────
     Job:
       type: object
       required: [id, title, description, status, employmentType, createdAt]
@@ -839,11 +1115,13 @@ components:
 
     CandidateInput:
       type: object
-      required: [name, email]
+      required: [name, email, password]
       properties:
         name:
           type: string
         email:
+          type: string
+        password:
           type: string
         phone:
           type: string
@@ -1055,6 +1333,8 @@ components:
         status:
           type: string
         scheduledAt:
+          type: ["string", "null"]
+        videoUrl:
           type: ["string", "null"]
         transcript:
           type: ["string", "null"]
@@ -1279,4 +1559,21 @@ components:
         salary:
           type: integer
         notes:
+          type: string
+
+    OnboardingDocument:
+      type: object
+      required: [id, onboardingId, fileName, fileUrl, fileType, uploadedAt]
+      properties:
+        id:
+          type: integer
+        onboardingId:
+          type: integer
+        fileName:
+          type: string
+        fileUrl:
+          type: string
+        fileType:
+          type: string
+        uploadedAt:
           type: string

@@ -9,6 +9,7 @@
 export interface CandidateInput {
   name: string;
   email: string;
+  password: string;
   phone?: string;
   location?: string;
   skills?: string[];

@@ -24,6 +24,9 @@ import type {
   Application,
   ApplicationInput,
   ApplicationUpdate,
+  AuthResponse,
+  BulkUploadCandidates200,
+  BulkUploadCandidatesBody,
   Candidate,
   CandidateInput,
   CandidateUpdate,
@@ -47,14 +50,22 @@ import type {
   ListInterviewsParams,
   ListJobsParams,
   ListOnboardingsParams,
+  LoginCredentials,
   MatchScore,
   Onboarding,
+  OnboardingDocument,
   OnboardingInput,
   OnboardingUpdate,
   RankedApplication,
+  RegisterCredentials,
   ResumeAnalysis,
   SkillCount,
-  TimeSeriesPoint
+  TimeSeriesPoint,
+  UploadCandidateResume200,
+  UploadCandidateResumeBody,
+  UploadInterviewVideoBody,
+  UploadOnboardingDocumentBody,
+  User
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -135,6 +146,225 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getHealthCheckQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getRegisterUserUrl = () => {
+
+
+
+
+  return `/api/auth/register`
+}
+
+/**
+ * @summary Register a new user (admin only)
+ */
+export const registerUser = async (registerCredentials: RegisterCredentials, options?: RequestInit): Promise<User> => {
+
+  return customFetch<User>(getRegisterUserUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      registerCredentials,)
+  }
+);}
+
+
+
+
+export const getRegisterUserMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<RegisterCredentials>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<RegisterCredentials>}, TContext> => {
+
+const mutationKey = ['registerUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerUser>>, {data: BodyType<RegisterCredentials>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerUser(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterUserMutationResult = NonNullable<Awaited<ReturnType<typeof registerUser>>>
+    export type RegisterUserMutationBody = BodyType<RegisterCredentials>
+    export type RegisterUserMutationError = ErrorType<void>
+
+    /**
+ * @summary Register a new user (admin only)
+ */
+export const useRegisterUser = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerUser>>, TError,{data: BodyType<RegisterCredentials>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerUser>>,
+        TError,
+        {data: BodyType<RegisterCredentials>},
+        TContext
+      > => {
+      return useMutation(getRegisterUserMutationOptions(options));
+    }
+
+export const getLoginUserUrl = () => {
+
+
+
+
+  return `/api/auth/login`
+}
+
+/**
+ * @summary Login for HR/Recruiter/Admin
+ */
+export const loginUser = async (loginCredentials: LoginCredentials, options?: RequestInit): Promise<AuthResponse> => {
+
+  return customFetch<AuthResponse>(getLoginUserUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      loginCredentials,)
+  }
+);}
+
+
+
+
+export const getLoginUserMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginUser>>, TError,{data: BodyType<LoginCredentials>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof loginUser>>, TError,{data: BodyType<LoginCredentials>}, TContext> => {
+
+const mutationKey = ['loginUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginUser>>, {data: BodyType<LoginCredentials>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  loginUser(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LoginUserMutationResult = NonNullable<Awaited<ReturnType<typeof loginUser>>>
+    export type LoginUserMutationBody = BodyType<LoginCredentials>
+    export type LoginUserMutationError = ErrorType<void>
+
+    /**
+ * @summary Login for HR/Recruiter/Admin
+ */
+export const useLoginUser = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginUser>>, TError,{data: BodyType<LoginCredentials>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof loginUser>>,
+        TError,
+        {data: BodyType<LoginCredentials>},
+        TContext
+      > => {
+      return useMutation(getLoginUserMutationOptions(options));
+    }
+
+export const getGetCurrentUserUrl = () => {
+
+
+
+
+  return `/api/auth/me`
+}
+
+/**
+ * @summary Get currently authenticated user
+ */
+export const getCurrentUser = async ( options?: RequestInit): Promise<User> => {
+
+  return customFetch<User>(getGetCurrentUserUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCurrentUserQueryKey = () => {
+    return [
+    `/api/auth/me`
+    ] as const;
+    }
+
+
+export const getGetCurrentUserQueryOptions = <TData = Awaited<ReturnType<typeof getCurrentUser>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentUser>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCurrentUserQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentUser>>> = ({ signal }) => getCurrentUser({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCurrentUser>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCurrentUserQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
+export type GetCurrentUserQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get currently authenticated user
+ */
+
+export function useGetCurrentUser<TData = Awaited<ReturnType<typeof getCurrentUser>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCurrentUser>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCurrentUserQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -674,6 +904,157 @@ export const useCreateCandidate = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreateCandidateMutationOptions(options));
+    }
+
+export const getBulkUploadCandidatesUrl = () => {
+
+
+
+
+  return `/api/candidates/bulk-upload`
+}
+
+/**
+ * @summary Bulk upload candidate resumes (PDF, DOCX) or CSV
+ */
+export const bulkUploadCandidates = async (bulkUploadCandidatesBody: BulkUploadCandidatesBody, options?: RequestInit): Promise<BulkUploadCandidates200> => {
+    const formData = new FormData();
+if(bulkUploadCandidatesBody.files !== undefined) {
+ bulkUploadCandidatesBody.files.forEach(value => formData.append(`files`, value));
+ }
+
+  return customFetch<BulkUploadCandidates200>(getBulkUploadCandidatesUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body:
+      formData,
+  }
+);}
+
+
+
+
+export const getBulkUploadCandidatesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUploadCandidates>>, TError,{data: BodyType<BulkUploadCandidatesBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkUploadCandidates>>, TError,{data: BodyType<BulkUploadCandidatesBody>}, TContext> => {
+
+const mutationKey = ['bulkUploadCandidates'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkUploadCandidates>>, {data: BodyType<BulkUploadCandidatesBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkUploadCandidates(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkUploadCandidatesMutationResult = NonNullable<Awaited<ReturnType<typeof bulkUploadCandidates>>>
+    export type BulkUploadCandidatesMutationBody = BodyType<BulkUploadCandidatesBody>
+    export type BulkUploadCandidatesMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Bulk upload candidate resumes (PDF, DOCX) or CSV
+ */
+export const useBulkUploadCandidates = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkUploadCandidates>>, TError,{data: BodyType<BulkUploadCandidatesBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof bulkUploadCandidates>>,
+        TError,
+        {data: BodyType<BulkUploadCandidatesBody>},
+        TContext
+      > => {
+      return useMutation(getBulkUploadCandidatesMutationOptions(options));
+    }
+
+export const getUploadCandidateResumeUrl = (id: number,) => {
+
+
+
+
+  return `/api/candidates/${id}/upload-resume`
+}
+
+/**
+ * @summary Upload a single resume for an existing candidate
+ */
+export const uploadCandidateResume = async (id: number,
+    uploadCandidateResumeBody: UploadCandidateResumeBody, options?: RequestInit): Promise<UploadCandidateResume200> => {
+    const formData = new FormData();
+if(uploadCandidateResumeBody.file !== undefined) {
+ formData.append(`file`, uploadCandidateResumeBody.file);
+ }
+
+  return customFetch<UploadCandidateResume200>(getUploadCandidateResumeUrl(id),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body:
+      formData,
+  }
+);}
+
+
+
+
+export const getUploadCandidateResumeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadCandidateResume>>, TError,{id: number;data: BodyType<UploadCandidateResumeBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadCandidateResume>>, TError,{id: number;data: BodyType<UploadCandidateResumeBody>}, TContext> => {
+
+const mutationKey = ['uploadCandidateResume'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadCandidateResume>>, {id: number;data: BodyType<UploadCandidateResumeBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadCandidateResume(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadCandidateResumeMutationResult = NonNullable<Awaited<ReturnType<typeof uploadCandidateResume>>>
+    export type UploadCandidateResumeMutationBody = BodyType<UploadCandidateResumeBody>
+    export type UploadCandidateResumeMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Upload a single resume for an existing candidate
+ */
+export const useUploadCandidateResume = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadCandidateResume>>, TError,{id: number;data: BodyType<UploadCandidateResumeBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadCandidateResume>>,
+        TError,
+        {id: number;data: BodyType<UploadCandidateResumeBody>},
+        TContext
+      > => {
+      return useMutation(getUploadCandidateResumeMutationOptions(options));
     }
 
 export const getGetCandidateUrl = (id: number,) => {
@@ -1676,6 +2057,82 @@ export const useUpdateInterview = <TError = ErrorType<unknown>,
       return useMutation(getUpdateInterviewMutationOptions(options));
     }
 
+export const getUploadInterviewVideoUrl = (id: number,) => {
+
+
+
+
+  return `/api/interviews/${id}/upload-video`
+}
+
+/**
+ * @summary Upload a recorded video for an interview session
+ */
+export const uploadInterviewVideo = async (id: number,
+    uploadInterviewVideoBody: UploadInterviewVideoBody, options?: RequestInit): Promise<Interview> => {
+    const formData = new FormData();
+if(uploadInterviewVideoBody.file !== undefined) {
+ formData.append(`file`, uploadInterviewVideoBody.file);
+ }
+
+  return customFetch<Interview>(getUploadInterviewVideoUrl(id),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body:
+      formData,
+  }
+);}
+
+
+
+
+export const getUploadInterviewVideoMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadInterviewVideo>>, TError,{id: number;data: BodyType<UploadInterviewVideoBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadInterviewVideo>>, TError,{id: number;data: BodyType<UploadInterviewVideoBody>}, TContext> => {
+
+const mutationKey = ['uploadInterviewVideo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadInterviewVideo>>, {id: number;data: BodyType<UploadInterviewVideoBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadInterviewVideo(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadInterviewVideoMutationResult = NonNullable<Awaited<ReturnType<typeof uploadInterviewVideo>>>
+    export type UploadInterviewVideoMutationBody = BodyType<UploadInterviewVideoBody>
+    export type UploadInterviewVideoMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Upload a recorded video for an interview session
+ */
+export const useUploadInterviewVideo = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadInterviewVideo>>, TError,{id: number;data: BodyType<UploadInterviewVideoBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadInterviewVideo>>,
+        TError,
+        {id: number;data: BodyType<UploadInterviewVideoBody>},
+        TContext
+      > => {
+      return useMutation(getUploadInterviewVideoMutationOptions(options));
+    }
+
 export const getAnalyzeInterviewUrl = (id: number,) => {
 
 
@@ -2520,5 +2977,228 @@ export const useUpdateOnboarding = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateOnboardingMutationOptions(options));
+    }
+
+export const getGetOnboardingDocumentsUrl = (id: number,) => {
+
+
+
+
+  return `/api/onboarding/${id}/documents`
+}
+
+/**
+ * @summary Get all documents for an onboarding record
+ */
+export const getOnboardingDocuments = async (id: number, options?: RequestInit): Promise<OnboardingDocument[]> => {
+
+  return customFetch<OnboardingDocument[]>(getGetOnboardingDocumentsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOnboardingDocumentsQueryKey = (id: number,) => {
+    return [
+    `/api/onboarding/${id}/documents`
+    ] as const;
+    }
+
+
+export const getGetOnboardingDocumentsQueryOptions = <TData = Awaited<ReturnType<typeof getOnboardingDocuments>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOnboardingDocuments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOnboardingDocumentsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOnboardingDocuments>>> = ({ signal }) => getOnboardingDocuments(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOnboardingDocuments>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetOnboardingDocumentsQueryResult = NonNullable<Awaited<ReturnType<typeof getOnboardingDocuments>>>
+export type GetOnboardingDocumentsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get all documents for an onboarding record
+ */
+
+export function useGetOnboardingDocuments<TData = Awaited<ReturnType<typeof getOnboardingDocuments>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOnboardingDocuments>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetOnboardingDocumentsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUploadOnboardingDocumentUrl = (id: number,) => {
+
+
+
+
+  return `/api/onboarding/${id}/documents`
+}
+
+/**
+ * @summary Upload a document for onboarding
+ */
+export const uploadOnboardingDocument = async (id: number,
+    uploadOnboardingDocumentBody: UploadOnboardingDocumentBody, options?: RequestInit): Promise<OnboardingDocument> => {
+    const formData = new FormData();
+if(uploadOnboardingDocumentBody.file !== undefined) {
+ formData.append(`file`, uploadOnboardingDocumentBody.file);
+ }
+
+  return customFetch<OnboardingDocument>(getUploadOnboardingDocumentUrl(id),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body:
+      formData,
+  }
+);}
+
+
+
+
+export const getUploadOnboardingDocumentMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadOnboardingDocument>>, TError,{id: number;data: BodyType<UploadOnboardingDocumentBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadOnboardingDocument>>, TError,{id: number;data: BodyType<UploadOnboardingDocumentBody>}, TContext> => {
+
+const mutationKey = ['uploadOnboardingDocument'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadOnboardingDocument>>, {id: number;data: BodyType<UploadOnboardingDocumentBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadOnboardingDocument(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadOnboardingDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof uploadOnboardingDocument>>>
+    export type UploadOnboardingDocumentMutationBody = BodyType<UploadOnboardingDocumentBody>
+    export type UploadOnboardingDocumentMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Upload a document for onboarding
+ */
+export const useUploadOnboardingDocument = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadOnboardingDocument>>, TError,{id: number;data: BodyType<UploadOnboardingDocumentBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadOnboardingDocument>>,
+        TError,
+        {id: number;data: BodyType<UploadOnboardingDocumentBody>},
+        TContext
+      > => {
+      return useMutation(getUploadOnboardingDocumentMutationOptions(options));
+    }
+
+export const getGenerateOfferLetterUrl = (id: number,) => {
+
+
+
+
+  return `/api/onboarding/${id}/generate-offer`
+}
+
+/**
+ * @summary Generate an offer letter PDF
+ */
+export const generateOfferLetter = async (id: number, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getGenerateOfferLetterUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getGenerateOfferLetterMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateOfferLetter>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateOfferLetter>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['generateOfferLetter'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateOfferLetter>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  generateOfferLetter(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateOfferLetterMutationResult = NonNullable<Awaited<ReturnType<typeof generateOfferLetter>>>
+
+    export type GenerateOfferLetterMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate an offer letter PDF
+ */
+export const useGenerateOfferLetter = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateOfferLetter>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateOfferLetter>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getGenerateOfferLetterMutationOptions(options));
     }
 

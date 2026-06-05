@@ -18,6 +18,49 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * @summary Register a new user (admin only)
+ */
+export const RegisterUserBody = zod.object({
+  "name": zod.string(),
+  "email": zod.string(),
+  "password": zod.string(),
+  "role": zod.enum(['hr', 'recruiter', 'admin'])
+})
+
+
+/**
+ * @summary Login for HR/Recruiter/Admin
+ */
+export const LoginUserBody = zod.object({
+  "email": zod.string(),
+  "password": zod.string()
+})
+
+export const LoginUserResponse = zod.object({
+  "token": zod.string(),
+  "user": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.enum(['hr', 'recruiter', 'admin']),
+  "createdAt": zod.string()
+})
+})
+
+
+/**
+ * @summary Get currently authenticated user
+ */
+export const GetCurrentUserResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "role": zod.enum(['hr', 'recruiter', 'admin']),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary List all job openings
  */
 export const ListJobsQueryParams = zod.object({
@@ -165,6 +208,7 @@ export const ListCandidatesResponse = zod.array(ListCandidatesResponseItem)
 export const CreateCandidateBody = zod.object({
   "name": zod.string(),
   "email": zod.string(),
+  "password": zod.string(),
   "phone": zod.string().optional(),
   "location": zod.string().optional(),
   "skills": zod.array(zod.string()).optional(),
@@ -175,6 +219,57 @@ export const CreateCandidateBody = zod.object({
   "summary": zod.string().optional(),
   "source": zod.string().optional(),
   "avatarUrl": zod.string().optional()
+})
+
+
+/**
+ * @summary Bulk upload candidate resumes (PDF, DOCX) or CSV
+ */
+export const BulkUploadCandidatesBody = zod.object({
+  "files": zod.array(zod.instanceof(File)).optional()
+})
+
+export const BulkUploadCandidatesResponse = zod.object({
+  "total": zod.number().optional(),
+  "successful": zod.number().optional(),
+  "failed": zod.number().optional(),
+  "candidates": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "skills": zod.array(zod.string()).optional(),
+  "experience": zod.number().nullish(),
+  "education": zod.string().nullish(),
+  "university": zod.string().nullish(),
+  "resumeScore": zod.number().nullish(),
+  "interviewScore": zod.number().nullish(),
+  "finalScore": zod.number().nullish(),
+  "recommendation": zod.string().nullish(),
+  "status": zod.string(),
+  "avatarUrl": zod.string().nullish(),
+  "resumeText": zod.string().nullish(),
+  "summary": zod.string().nullish(),
+  "source": zod.string().nullish(),
+  "createdAt": zod.string()
+})).optional()
+})
+
+
+/**
+ * @summary Upload a single resume for an existing candidate
+ */
+export const UploadCandidateResumeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UploadCandidateResumeBody = zod.object({
+  "file": zod.instanceof(File).optional()
+})
+
+export const UploadCandidateResumeResponse = zod.object({
+  "success": zod.boolean().optional()
 })
 
 
@@ -541,6 +636,7 @@ export const ListInterviewsResponseItem = zod.object({
   "jobId": zod.number(),
   "status": zod.string(),
   "scheduledAt": zod.string().nullish(),
+  "videoUrl": zod.string().nullish(),
   "transcript": zod.string().nullish(),
   "technicalScore": zod.number().nullish(),
   "communicationScore": zod.number().nullish(),
@@ -612,6 +708,7 @@ export const GetInterviewResponse = zod.object({
   "jobId": zod.number(),
   "status": zod.string(),
   "scheduledAt": zod.string().nullish(),
+  "videoUrl": zod.string().nullish(),
   "transcript": zod.string().nullish(),
   "technicalScore": zod.number().nullish(),
   "communicationScore": zod.number().nullish(),
@@ -685,6 +782,72 @@ export const UpdateInterviewResponse = zod.object({
   "jobId": zod.number(),
   "status": zod.string(),
   "scheduledAt": zod.string().nullish(),
+  "videoUrl": zod.string().nullish(),
+  "transcript": zod.string().nullish(),
+  "technicalScore": zod.number().nullish(),
+  "communicationScore": zod.number().nullish(),
+  "relevanceScore": zod.number().nullish(),
+  "confidenceScore": zod.number().nullish(),
+  "problemSolvingScore": zod.number().nullish(),
+  "overallScore": zod.number().nullish(),
+  "aiNotes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "candidate": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "skills": zod.array(zod.string()).optional(),
+  "experience": zod.number().nullish(),
+  "education": zod.string().nullish(),
+  "university": zod.string().nullish(),
+  "resumeScore": zod.number().nullish(),
+  "interviewScore": zod.number().nullish(),
+  "finalScore": zod.number().nullish(),
+  "recommendation": zod.string().nullish(),
+  "status": zod.string(),
+  "avatarUrl": zod.string().nullish(),
+  "resumeText": zod.string().nullish(),
+  "summary": zod.string().nullish(),
+  "source": zod.string().nullish(),
+  "createdAt": zod.string()
+}).optional(),
+  "job": zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "requiredSkills": zod.array(zod.string()).optional(),
+  "experience": zod.string().nullish(),
+  "salaryMin": zod.number().nullish(),
+  "salaryMax": zod.number().nullish(),
+  "location": zod.string().nullish(),
+  "employmentType": zod.string(),
+  "status": zod.string(),
+  "applicantCount": zod.number().optional(),
+  "createdAt": zod.string()
+}).optional()
+})
+
+
+/**
+ * @summary Upload a recorded video for an interview session
+ */
+export const UploadInterviewVideoParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UploadInterviewVideoBody = zod.object({
+  "file": zod.instanceof(File).optional()
+})
+
+export const UploadInterviewVideoResponse = zod.object({
+  "id": zod.number(),
+  "candidateId": zod.number(),
+  "jobId": zod.number(),
+  "status": zod.string(),
+  "scheduledAt": zod.string().nullish(),
+  "videoUrl": zod.string().nullish(),
   "transcript": zod.string().nullish(),
   "technicalScore": zod.number().nullish(),
   "communicationScore": zod.number().nullish(),
@@ -1046,6 +1209,44 @@ export const UpdateOnboardingResponse = zod.object({
   "applicantCount": zod.number().optional(),
   "createdAt": zod.string()
 }).optional()
+})
+
+
+/**
+ * @summary Get all documents for an onboarding record
+ */
+export const GetOnboardingDocumentsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetOnboardingDocumentsResponseItem = zod.object({
+  "id": zod.number(),
+  "onboardingId": zod.number(),
+  "fileName": zod.string(),
+  "fileUrl": zod.string(),
+  "fileType": zod.string(),
+  "uploadedAt": zod.string()
+})
+export const GetOnboardingDocumentsResponse = zod.array(GetOnboardingDocumentsResponseItem)
+
+
+/**
+ * @summary Upload a document for onboarding
+ */
+export const UploadOnboardingDocumentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UploadOnboardingDocumentBody = zod.object({
+  "file": zod.instanceof(File).optional()
+})
+
+
+/**
+ * @summary Generate an offer letter PDF
+ */
+export const GenerateOfferLetterParams = zod.object({
+  "id": zod.coerce.number()
 })
 
 

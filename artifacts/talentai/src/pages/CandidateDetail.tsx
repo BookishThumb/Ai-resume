@@ -7,13 +7,16 @@ import {
 } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ScoreBadge, { ScoreRing } from "@/components/ScoreBadge";
-import { ArrowLeft, Mail, Phone, MapPin, GraduationCap, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Mail, Phone, MapPin, GraduationCap, ChevronDown, UploadCloud } from "lucide-react";
+import { useState, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CandidateDetail() {
   const [, params] = useRoute("/candidates/:id");
   const id = parseInt(params?.id ?? "0", 10);
   const [analysisOpen, setAnalysisOpen] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const { data: candidate, isLoading } = useGetCandidate(id, { query: { enabled: !!id, queryKey: getGetCandidateQueryKey(id) } });
   const { data: analysis, isLoading: analysisLoading } = useGetCandidateResumeAnalysis(id, {
@@ -28,11 +31,44 @@ export default function CandidateDetail() {
   return (
     <Layout>
       <div className="p-8 max-w-5xl">
-        <Link href="/candidates">
-          <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 text-sm transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to Candidates
+        <div className="flex justify-between items-center mb-6">
+          <Link href="/candidates">
+            <button className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm transition-colors">
+              <ArrowLeft className="w-4 h-4" /> Back to Candidates
+            </button>
+          </Link>
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 bg-primary/20 text-primary hover:bg-primary/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            <UploadCloud className="w-4 h-4" />
+            Upload Resume
           </button>
-        </Link>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept=".pdf,.docx"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const formData = new FormData();
+              formData.append("file", file);
+              try {
+                const res = await fetch(`/api/candidates/${id}/upload-resume`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                  body: formData
+                });
+                if (!res.ok) throw new Error("Failed to upload resume");
+                toast({ title: "Success", description: "Resume uploaded successfully" });
+                window.location.reload();
+              } catch (error: any) {
+                toast({ title: "Error", description: error.message, variant: "destructive" });
+              }
+            }}
+          />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Profile */}
